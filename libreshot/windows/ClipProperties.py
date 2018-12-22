@@ -79,10 +79,10 @@ class frmClipProperties(SimpleGtkBuilderApp):
 		# init the default properties
 		self.txtFileName.set_text(fname)
 		self.spinbtnStart.set_value(self.current_clip.position_on_track)
-		self.txtLength.set_text(_("{0} seconds").format(str(self.current_clip.length())))
+		self.txtLength.set_value(round(self.current_clip.length(), 2))
 		# Out time needs to me loaded before in time otherwise the properties window doesn't remember a cut start time when re-opened
 		self.txtOut.set_value(round(self.current_clip.end_time, 2))
-                self.txtIn.set_value(round(self.current_clip.start_time, 2))
+		self.txtIn.set_value(round(self.current_clip.start_time, 2))
 		self.txtAudioFadeInAmount.set_value(round(self.current_clip.audio_fade_in_amount, 2))
 		self.txtAudioFadeOutAmount.set_value(round(self.current_clip.audio_fade_out_amount, 2))
 		self.txtVideoFadeInAmount.set_value(round(self.current_clip.video_fade_in_amount, 2))
@@ -669,9 +669,6 @@ class frmClipProperties(SimpleGtkBuilderApp):
 		self.spinAdvancedSpeed.set_value(num / den)
 		
 	def on_txtIn_value_changed(self, widget, *args):
-		# get correct gettext method
-		_ = self._
-		
 		print "on_txtIn_value_changed"
 		local_in = float(self.txtIn.get_value())
 		local_out = float(self.txtOut.get_value())
@@ -682,12 +679,25 @@ class frmClipProperties(SimpleGtkBuilderApp):
 			self.txtIn.set_text(str(local_in))
 		
 		# update length
-		self.txtLength.set_text(_("{0} seconds").format(str(round(local_out - local_in, 2))))
-		
+		self.txtLength.set_value(round(local_out - local_in, 2))
+
+	def on_txtLength_value_changed(self, widget, *args):
+		print "on_txtLength_value_changed"
+		local_in = float(self.txtIn.get_value())
+		local_out = float(self.txtOut.get_value())
+		local_length = float(self.txtLength.get_value())
+		local_max_length = round(self.current_clip.max_length, 2)
+
+		local_out = local_in + local_length
+		if local_out > local_max_length:
+			local_out = local_max_length
+			local_length = local_max_length - local_in
+			self.txtLength.set_value(round(local_length, 2))
+
+		# update out
+		self.txtOut.set_value(round(local_out, 2))
+
 	def on_txtOut_value_changed(self, widget, *args):
-		# get correct gettext method
-		_ = self._
-		
 		print "on_txtOut_value_changed"
 		local_in = float(self.txtIn.get_value())
 		local_out = float(self.txtOut.get_value())
@@ -703,7 +713,7 @@ class frmClipProperties(SimpleGtkBuilderApp):
 			self.txtOut.set_text(str(local_out))
 		
 		# update length
-		self.txtLength.set_text(_("{0} seconds").format(str(round(local_out - local_in, 2))))
+		self.txtLength.set_value(round(local_out - local_in, 2))
 
 	def set_StartEnd_values(self):
 		keyframe = self.keyframes["start"]
@@ -866,7 +876,7 @@ class frmClipProperties(SimpleGtkBuilderApp):
 		localspinbtnStart = self.spinbtnStart.get_value()
 		localtxtIn = self.txtIn.get_value()
 		localtxtOut = self.txtOut.get_value()
-		localtxtLength = float(self.txtLength.get_text().split()[0])
+		localtxtLength = self.txtLength.get_value()
 		localcboFill = self.chkFill.get_active()
 		localchkMaintainAspect = self.chkMaintainAspect.get_active()
 		localcboDirection = self.cboDirection.get_active_text().lower()
