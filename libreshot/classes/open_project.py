@@ -35,8 +35,22 @@ def open_project(project_object, file_path):
 		old_theme = project_object.theme
 		project_object.mlt_profile = None
 
-		# update the form reference on the new project file
-		project_object = pickle.load(myFile)
+		# check if it's an OpenShot project
+		first_line = myFile.readline()
+		if first_line[:26] == '(iopenshot.classes.project':
+			# convert the project references to OpenShot objects, into the corresponding LibreShot ones
+			file_content = '(iclasses.project' + first_line[26:]
+			for line in myFile:
+				if line[:8] == 'OpenShot':
+					line = line.replace('OpenShotFile', 'LibreShotFile')
+					line = line.replace('OpenShotFolder', 'LibreShotFolder')
+				file_content += line
+			# update the form reference on the new project file
+			project_object = pickle.loads(file_content)
+		else:
+			myFile.seek(0)
+			# update the form reference on the new project file
+			project_object = pickle.load(myFile)
 
 		# re-attach some variables (that aren't pickleable)
 		project_object.form = old_form
